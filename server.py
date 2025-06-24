@@ -81,6 +81,7 @@ app = FastAPI()
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+A4F_API_KEY = os.environ.get("A4F_API_KEY")  # NEW: A4F provider
 
 # Get preferred provider (default to openai)
 PREFERRED_PROVIDER = os.environ.get("PREFERRED_PROVIDER", "openai").lower()
@@ -110,6 +111,14 @@ OPENAI_MODELS = [
 GEMINI_MODELS = [
     "gemini-2.5-pro-preview-03-25",
     "gemini-2.0-flash"
+]
+
+# List of A4F models (example, you can expand this list as needed)
+A4F_MODELS = [
+    # Add A4F model names as needed, e.g.:
+    "provider-5/gpt-4o-2024-08-06",
+    "anthropic/claude-3-opus",
+    # ...
 ]
 
 # Helper function to clean schema for Gemini
@@ -1110,6 +1119,10 @@ async def create_message(
         elif request.model.startswith("gemini/"):
             litellm_request["api_key"] = GEMINI_API_KEY
             logger.debug(f"Using Gemini API key for model: {request.model}")
+        elif request.model.startswith("a4f/") or request.model.startswith("openai/") or request.model.startswith("anthropic/") or request.model.startswith("mistral/"):
+            litellm_request["api_key"] = A4F_API_KEY
+            litellm_request["base_url"] = "https://api.a4f.co/v1"  # A4F endpoint
+            logger.debug(f"Using A4F API key for model: {request.model}")
         else:
             litellm_request["api_key"] = ANTHROPIC_API_KEY
             logger.debug(f"Using Anthropic API key for model: {request.model}")
