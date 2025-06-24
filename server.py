@@ -116,8 +116,8 @@ GEMINI_MODELS = [
 # List of A4F models (example, you can expand this list as needed)
 A4F_MODELS = [
     # Add A4F model names as needed, e.g.:
-    "provider-5/gpt-4o-2024-08-06",
-    "anthropic/claude-3-opus",
+    "gpt-3.5-turbo",
+    "claude-3-opus",
     # ...
 ]
 
@@ -1121,7 +1121,7 @@ async def create_message(
             logger.debug(f"Using Gemini API key for model: {request.model}")
         elif request.model.startswith("a4f/") or request.model.startswith("openai/") or request.model.startswith("anthropic/") or request.model.startswith("mistral/"):
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://api.a4f.co/v1"  # A4F endpoint
+            litellm_request["base_url"] = "https://api.paxsenix.biz.id/v1"  # A4F endpoint
             logger.debug(f"Using A4F API key for model: {request.model}")
         else:
             litellm_request["api_key"] = ANTHROPIC_API_KEY
