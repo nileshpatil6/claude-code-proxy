@@ -2,7 +2,7 @@
 
 **Use Anthropic clients (like Claude Code) with Gemini or OpenAI backends.** 🤝
 
-A proxy server that lets you use Anthropic clients with Gemini or OpenAI models via LiteLLM. 🌉
+A proxy server that lets you use Anthropic clients with Gemini, OpenAI, or A4F models via LiteLLM. 🌉
 
 
 ![Anthropic API Proxy](pic.png)
@@ -97,6 +97,10 @@ The following OpenAI models are supported with automatic `openai/` prefix handli
 The following Gemini models are supported with automatic `gemini/` prefix handling:
 - gemini-2.5-pro-preview-03-25
 - gemini-2.0-flash
+
+#### A4F Models
+The following A4F models are supported with automatic `a4f/` prefix handling:
+- a4f/chatgpt-4o-latest
 
 ### Model Prefix Handling
 The proxy automatically adds the appropriate prefix to model names:

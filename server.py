@@ -81,7 +81,7 @@ app = FastAPI()
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-A4F_API_KEY = os.environ.get("A4F_API_KEY")  # NEW: A4F provider
+A4F_API_KEY = os.environ.get("A4F_API_KEY")
 
 # Get preferred provider (default to openai)
 PREFERRED_PROVIDER = os.environ.get("PREFERRED_PROVIDER", "openai").lower()
@@ -110,15 +110,12 @@ OPENAI_MODELS = [
 # List of Gemini models
 GEMINI_MODELS = [
     "gemini-2.5-pro-preview-03-25",
-    "gemini-2.5-flash"
+    "gemini-2.0-flash"
 ]
 
-# List of A4F models (example, you can expand this list as needed)
+# List of A4F models
 A4F_MODELS = [
-    # Add A4F model names as needed, e.g.:
-    "gpt-3.5-turbo",
-    "claude-3-opus",
-    # ...
+    "a4f/chatgpt-4o-latest"
 ]
 
 # Helper function to clean schema for Gemini
@@ -211,6 +208,8 @@ class MessagesRequest(BaseModel):
             clean_v = clean_v[7:]
         elif clean_v.startswith('gemini/'):
             clean_v = clean_v[7:]
+        elif clean_v.startswith('a4f/'):
+            clean_v = clean_v[4:]
 
         # --- Mapping Logic --- START ---
         mapped = False
@@ -240,13 +239,16 @@ class MessagesRequest(BaseModel):
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
                 new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
+            elif clean_v in A4F_MODELS and not v.startswith('a4f/'):
+                new_model = f"a4f/{clean_v}"
+                mapped = True
         # --- Mapping Logic --- END ---
 
         if mapped:
             logger.debug(f"📌 MODEL MAPPING: '{original_model}' ➡️ '{new_model}'")
         else:
              # If no mapping occurred and no prefix exists, log warning or decide default
-             if not v.startswith(('openai/', 'gemini/', 'anthropic/')):
+             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'a4f/')):
                  logger.warning(f"⚠️ No prefix or mapping rule for model: '{original_model}'. Using as is.")
              new_model = v # Ensure we return the original if no rule applied
 
@@ -284,6 +286,8 @@ class TokenCountRequest(BaseModel):
             clean_v = clean_v[7:]
         elif clean_v.startswith('gemini/'):
             clean_v = clean_v[7:]
+        elif clean_v.startswith('a4f/'):
+            clean_v = clean_v[4:]
 
         # --- Mapping Logic --- START ---
         mapped = False
@@ -313,12 +317,15 @@ class TokenCountRequest(BaseModel):
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
                 new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
+            elif clean_v in A4F_MODELS and not v.startswith('a4f/'):
+                new_model = f"a4f/{clean_v}"
+                mapped = True
         # --- Mapping Logic --- END ---
 
         if mapped:
             logger.debug(f"📌 TOKEN COUNT MAPPING: '{original_model}' ➡️ '{new_model}'")
         else:
-             if not v.startswith(('openai/', 'gemini/', 'anthropic/')):
+             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'a4f/')):
                  logger.warning(f"⚠️ No prefix or mapping rule for token count model: '{original_model}'. Using as is.")
              new_model = v # Ensure we return the original if no rule applied
 
@@ -983,7 +990,6 @@ async def handle_streaming(response_generator, original_request: MessagesRequest
                                 function = getattr(tool_call, 'function', None)
                                 arguments = getattr(function, 'arguments', '') if function else ''
                             
-
                             # If we have arguments, send them as a delta
                             if arguments:
                                 # Try to detect if arguments are valid JSON or just a fragment
@@ -1120,9 +1126,8 @@ async def create_message(
         elif request.model.startswith("gemini/"):
             litellm_request["api_key"] = GEMINI_API_KEY
             logger.debug(f"Using Gemini API key for model: {request.model}")
-        elif request.model.startswith("a4f/") or request.model.startswith("openai/") or request.model.startswith("anthropic/") or request.model.startswith("mistral/"):
+        elif request.model.startswith("a4f/"):
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://api.paxsenix.biz.id/v1"  # A4F endpoint
             logger.debug(f"Using A4F API key for model: {request.model}")
         else:
             litellm_request["api_key"] = ANTHROPIC_API_KEY
@@ -1330,9 +1335,12 @@ async def create_message(
         
         # Check for additional exception details in dictionaries
         if hasattr(e, '__dict__'):
-            error_details['__dict__'] = make_json_safe(e.__dict__)
-        # Use safe serialization for logging
-        logger.error(f"Error processing request: {json.dumps(make_json_safe(error_details), indent=2)}")
+            for key, value in e.__dict__.items():
+                if key not in error_details and key not in ['args', '__traceback__']:
+                    error_details[key] = str(value)
+        
+        # Log all error details
+        logger.error(f"Error processing request: {json.dumps(error_details, indent=2)}")
         
         # Format error for response
         error_message = f"Error: {str(e)}"
@@ -1465,18 +1473,6 @@ def log_request_beautifully(method, path, claude_model, openai_model, num_messag
     print(log_line)
     print(model_line)
     sys.stdout.flush()
-
-def make_json_safe(obj):
-    """Recursively convert non-serializable objects to strings for safe JSON logging."""
-    if isinstance(obj, dict):
-        return {k: make_json_safe(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [make_json_safe(i) for i in obj]
-    try:
-        json.dumps(obj)
-        return obj
-    except (TypeError, OverflowError):
-        return str(obj)
 
 if __name__ == "__main__":
     import sys
