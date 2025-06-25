@@ -1145,9 +1145,6 @@ async def create_message(
         else:
             litellm_request["api_key"] = ANTHROPIC_API_KEY
             logger.debug(f"Using Anthropic API key for model: {request.model}")
-        else:
-            litellm_request["api_key"] = ANTHROPIC_API_KEY
-            logger.debug(f"Using Anthropic API key for model: {request.model}")
         
         # For OpenAI models - modify request format to work with limitations
         if "openai" in litellm_request["model"] or "provider-1" in litellm_request["model"] and "messages" in litellm_request:
