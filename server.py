@@ -576,7 +576,7 @@ def convert_anthropic_to_litellm(anthropic_request: MessagesRequest) -> Dict[str
             if hasattr(tool, 'dict'):
                 tool_dict = tool.dict()
             else:
-                # Ensure tool_dict is a dictionary, handle potential errors if 'tool' isn't dict-like
+                # Ensure tool_dict is a
                 try:
                     tool_dict = dict(tool) if not isinstance(tool, dict) else tool
                 except (TypeError, ValueError):
