@@ -214,7 +214,7 @@ class MessagesRequest(BaseModel):
             clean_v = clean_v[7:]
         elif clean_v.startswith('a4f/'):
             clean_v = clean_v[4:]
-        elif clean_v.startswith('provider-1/'):
+        elif clean_v.startswith('provider-5/'):
             clean_v = clean_v[11:]
 
         # --- Mapping Logic --- START ---
