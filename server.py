@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import re
 from datetime import datetime
 import sys
+import collections.abc
 
 # Load environment variables from .env file
 load_dotenv()
@@ -1353,7 +1354,7 @@ async def create_message(
                     error_details[key] = str(value)
         
         # Log all error details
-        logger.error(f"Error processing request: {json.dumps(error_details, indent=2)}")
+        logger.error(f"Error processing request: {json.dumps(make_json_safe(error_details), indent=2)}")
         
         # Format error for response
         error_message = f"Error: {str(e)}"
@@ -1437,7 +1438,12 @@ async def count_tokens(
     except Exception as e:
         import traceback
         error_traceback = traceback.format_exc()
-        logger.error(f"Error counting tokens: {str(e)}\n{error_traceback}")
+        error_details = {
+            "error": str(e),
+            "type": type(e).__name__,
+            "traceback": error_traceback
+        }
+        logger.error(f"Error processing count_tokens: {json.dumps(make_json_safe(error_details), indent=2)}")
         raise HTTPException(status_code=500, detail=f"Error counting tokens: {str(e)}")
 
 @app.get("/")
@@ -1488,6 +1494,19 @@ def log_request_beautifully(method, path, claude_model, openai_model, num_messag
     print(log_line)
     print(model_line)
     sys.stdout.flush()
+
+# --- Safe JSON helper for error logging ---
+def make_json_safe(obj):
+    """Recursively convert non-serializable objects to strings for safe JSON logging."""
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    if isinstance(obj, dict):
+        return {str(k): make_json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [make_json_safe(i) for i in obj]
+    if hasattr(obj, "__dict__"):
+        return make_json_safe(vars(obj))
+    return str(obj)
 
 if __name__ == "__main__":
     import sys
