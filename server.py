@@ -1161,11 +1161,12 @@ async def create_message(
         
         # Determine which API key to use based on the model
         if request.model.startswith("provider-6/") or request.model.startswith("a4f/"):
-            litellm_request["model"] = request.model
+            # Extract the actual model name without the provider prefix
+            actual_model = request.model.replace("provider-6/", "").replace("a4f/", "")
+            litellm_request["model"] = f"openai/{actual_model}"
             litellm_request["api_key"] = A4F_API_KEY
             litellm_request["base_url"] = "https://api.a4f.co/v1"
-            litellm_request["custom_llm_provider"] = "a4f"
-            logger.debug(f"Using A4F API key for model: {request.model}")
+            logger.debug(f"Using A4F API key for model: {request.model} -> {litellm_request['model']}")
         elif request.model.startswith("openai/"):
             litellm_request["api_key"] = OPENAI_API_KEY
             logger.debug(f"Using OpenAI API key for model: {request.model}")
