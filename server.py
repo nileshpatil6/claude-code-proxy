@@ -1159,29 +1159,21 @@ async def create_message(
         # Convert Anthropic request to LiteLLM format
         litellm_request = convert_anthropic_to_litellm(request)
         
-        # Determine which API key to use based on the model
-        if request.model.startswith("provider-5/") or request.model.startswith("a4f/"):
-            # For A4F, we need to keep the provider-5/ prefix but use openai/ for LiteLLM routing
-            if request.model.startswith("a4f/"):
-                # Convert a4f/ to provider-5/ format
-                actual_model = request.model.replace("a4f/", "provider-5/")
-            else:
-                # Already has provider-5/ prefix
-                actual_model = request.model
-            
-            litellm_request["model"] = f"openai/{actual_model}"
+        # Configure for new provider API
+        if request.model:
+            litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://api.a4f.co/v1"
-            logger.debug(f"Using A4F API key for model: {request.model} -> {litellm_request['model']}")
-        elif request.model.startswith("openai/"):
-            litellm_request["api_key"] = OPENAI_API_KEY
-            logger.debug(f"Using OpenAI API key for model: {request.model}")
-        elif request.model.startswith("gemini/"):
-            litellm_request["api_key"] = GEMINI_API_KEY
-            logger.debug(f"Using Gemini API key for model: {request.model}")
-        else:
-            litellm_request["api_key"] = ANTHROPIC_API_KEY
-            logger.debug(f"Using Anthropic API key for model: {request.model}")
+            litellm_request["base_url"] = "https://api.paxsenix.biz.id/v1"
+            
+            # Remove tools and tool_choice for models that don't support function calling
+            if "tools" in litellm_request:
+                logger.debug(f"Removing tools for model: {request.model}")
+                del litellm_request["tools"]
+            if "tool_choice" in litellm_request:
+                logger.debug(f"Removing tool_choice for model: {request.model}")
+                del litellm_request["tool_choice"]
+            
+            logger.debug(f"Configured for new provider API: {request.model}")
         
         # For OpenAI models - modify request format to work with limitations
         if "openai" in litellm_request["model"] or "provider-5" in litellm_request["model"] and "messages" in litellm_request:
