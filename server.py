@@ -1345,13 +1345,25 @@ async def create_message(
         # Check for LiteLLM-specific attributes
         for attr in ['message', 'status_code', 'response', 'llm_provider', 'model']:
             if hasattr(e, attr):
-                error_details[attr] = getattr(e, attr)
+                attr_value = getattr(e, attr)
+                # Convert Response objects to string immediately to avoid JSON serialization issues
+                if attr == 'response' and hasattr(attr_value, '__dict__'):
+                    error_details[attr] = str(attr_value)
+                else:
+                    error_details[attr] = attr_value
         
         # Check for additional exception details in dictionaries
         if hasattr(e, '__dict__'):
             for key, value in e.__dict__.items():
                 if key not in error_details and key not in ['args', '__traceback__']:
-                    error_details[key] = str(value)
+                    # Safely convert any value to string, handling Response objects
+                    try:
+                        if hasattr(value, '__dict__'):
+                            error_details[key] = str(value)
+                        else:
+                            error_details[key] = value
+                    except Exception:
+                        error_details[key] = "<Unable to serialize value>"
         
         # Log all error details
         logger.error(f"Error processing request: {json.dumps(make_json_safe(error_details), indent=2)}")
