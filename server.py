@@ -1496,10 +1496,14 @@ def log_request_beautifully(method, path, claude_model, openai_model, num_messag
     sys.stdout.flush()
 
 # --- Safe JSON helper for error logging ---
+from fastapi.responses import Response
+
 def make_json_safe(obj):
     """Recursively convert non-serializable objects to strings for safe JSON logging."""
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
+    if isinstance(obj, Response):
+        return str(obj)
     if isinstance(obj, dict):
         return {str(k): make_json_safe(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple, set)):
