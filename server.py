@@ -111,6 +111,7 @@ OPENAI_MODELS = [
 GEMINI_MODELS = [
     "gemini-2.5-pro-preview-03-25",
     "gemini-2.5-flash"
+    "gemini-2.0-flash"
 ]
 
 # List of A4F models (example, you can expand this list as needed)
@@ -1121,8 +1122,11 @@ async def create_message(
             logger.debug(f"Using Gemini API key for model: {request.model}")
         elif request.model.startswith("a4f/") or request.model.startswith("openai/") or request.model.startswith("anthropic/") or request.model.startswith("mistral/"):
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://api.paxsenix.biz.id/v1"  # A4F endpoint
+            litellm_request["base_url"] = "https://api.a4f.co/v1"  # Updated A4F endpoint
             logger.debug(f"Using A4F API key for model: {request.model}")
+            # Ensure model name is correctly prefixed for A4F
+            if not request.model.startswith("a4f/"):
+                raise HTTPException(status_code=400, detail="A4F models must be prefixed with 'a4f/'. Example: 'a4f/openai/gpt-3.5-turbo'")
         else:
             litellm_request["api_key"] = ANTHROPIC_API_KEY
             logger.debug(f"Using Anthropic API key for model: {request.model}")
@@ -1165,16 +1169,13 @@ async def create_message(
                                             all_text += str(item) + "\n"
                             elif isinstance(result_content, str):
                                 all_text += result_content + "\n"
-                            else:
                                 try:
-                                    all_text += json.dumps(result_content) + "\n"
+                                    all_text += json.dumps(result_content) + "\n"            all_text += str(result_content) + "\n"
                                 except:
                                     all_text += str(result_content) + "\n"
                         
-                        # Replace the list with extracted text
-                        litellm_request["messages"][i]["content"] = all_text.strip() or "..."
-                        logger.warning(f"Converted tool_result to plain text: {all_text.strip()[:200]}...")
-                        continue  # Skip normal processing for this message
+                        # Replace the list with extracted textt: {all_text.strip()[:200]}...")
+                        litellm_request["messages"][i]["content"] = all_text.strip() or "..."        continue  # Skip normal processing for this message
                 
                 # 1. Handle content field - normal case
                 if "content" in msg:
@@ -1213,266 +1214,278 @@ async def create_message(
                                         if result_content.get("type") == "text":
                                             text_content += result_content.get("text", "") + "\n"
                                         else:
+                                            text_content += result_content.get("text", "") + "\n"
+                                        else:t_content += json.dumps(result_content) + "\n"
                                             try:
-                                                text_content += json.dumps(result_content) + "\n"
+                                                text_content += json.dumps(result_content) + "\n"t_content) + "\n"
                                             except:
-                                                text_content += str(result_content) + "\n"
+                                                text_content += str(result_content) + "\n"ext_content += result_content + "\n"
                                     elif isinstance(result_content, str):
                                         text_content += result_content + "\n"
-                                    else:
+                                    else:t_content += json.dumps(result_content) + "\n"
                                         try:
-                                            text_content += json.dumps(result_content) + "\n"
+                                            text_content += json.dumps(result_content) + "\n"            text_content += str(result_content) + "\n"
                                         except:
                                             text_content += str(result_content) + "\n"
                                 
-                                # Handle tool_use content blocks
+                                # Handle tool_use content blockswn")
                                 elif block.get("type") == "tool_use":
                                     tool_name = block.get("name", "unknown")
-                                    tool_id = block.get("id", "unknown")
+                                    tool_id = block.get("id", "unknown")    text_content += f"[Tool: {tool_name} (ID: {tool_id})]\nInput: {tool_input}\n\n"
                                     tool_input = json.dumps(block.get("input", {}))
                                     text_content += f"[Tool: {tool_name} (ID: {tool_id})]\nInput: {tool_input}\n\n"
                                 
-                                # Handle image content blocks
+                                # Handle image content blocks            text_content += "[Image content - not displayed in text format]\n"
                                 elif block.get("type") == "image":
-                                    text_content += "[Image content - not displayed in text format]\n"
-                        
-                        # Make sure content is never empty for OpenAI models
+                                    text_content += "[Image content - not displayed in text format]\n" empty for OpenAI models
+                        p():
+                        # Make sure content is never empty for OpenAI models    text_content = "..."
                         if not text_content.strip():
-                            text_content = "..."
-                        
+                            text_content = "..." = text_content.strip()
+                        ty string content
                         litellm_request["messages"][i]["content"] = text_content.strip()
-                    # Also check for None or empty string content
+                    # Also check for None or empty string content        litellm_request["messages"][i]["content"] = "..." # Empty content not allowed
                     elif msg["content"] is None:
-                        litellm_request["messages"][i]["content"] = "..." # Empty content not allowed
+                        litellm_request["messages"][i]["content"] = "..." # Empty content not allowedI doesn't support in messages
                 
-                # 2. Remove any fields OpenAI doesn't support in messages
-                for key in list(msg.keys()):
-                    if key not in ["role", "content", "name", "tool_call_id", "tool_calls"]:
+                # 2. Remove any fields OpenAI doesn't support in messages"]:
+                for key in list(msg.keys()):ng(f"Removing unsupported field from message: {key}")
+                    if key not in ["role", "content", "name", "tool_call_id", "tool_calls"]:            del msg[key]
                         logger.warning(f"Removing unsupported field from message: {key}")
-                        del msg[key]
-            
+                        del msg[key]id values and dump full message details
+            essages"]):
             # 3. Final validation - check for any remaining invalid values and dump full message details
-            for i, msg in enumerate(litellm_request["messages"]):
+            for i, msg in enumerate(litellm_request["messages"]):logger.debug(f"Message {i} format check - role: {msg.get('role')}, content type: {type(msg.get('content'))}")
                 # Log the message format for debugging
-                logger.debug(f"Message {i} format check - role: {msg.get('role')}, content type: {type(msg.get('content'))}")
+                logger.debug(f"Message {i} format check - role: {msg.get('role')}, content type: {type(msg.get('content'))}")place with placeholder
                 
-                # If content is still a list or None, replace with placeholder
+                # If content is still a list or None, replace with placeholdert content after processing: {json.dumps(msg.get('content'))}")
                 if isinstance(msg.get("content"), list):
-                    logger.warning(f"CRITICAL: Message {i} still has list content after processing: {json.dumps(msg.get('content'))}")
+                    logger.warning(f"CRITICAL: Message {i} still has list content after processing: {json.dumps(msg.get('content'))}")i]["content"] = f"Content as JSON: {json.dumps(msg.get('content'))}"
                     # Last resort - stringify the entire content as JSON
-                    litellm_request["messages"][i]["content"] = f"Content as JSON: {json.dumps(msg.get('content'))}"
-                elif msg.get("content") is None:
+                    litellm_request["messages"][i]["content"] = f"Content as JSON: {json.dumps(msg.get('content'))}"er")
+                elif msg.get("content") is None:            litellm_request["messages"][i]["content"] = "..." # Fallback placeholder
                     logger.warning(f"Message {i} has None content - replacing with placeholder")
                     litellm_request["messages"][i]["content"] = "..." # Fallback placeholder
-        
-        # Only log basic info about the request, not the full details
         logger.debug(f"Request for model: {litellm_request.get('model')}, stream: {litellm_request.get('stream', False)}")
+        # Only log basic info about the request, not the full details
+        logger.debug(f"Request for model: {litellm_request.get('model')}, stream: {litellm_request.get('stream', False)}") mode
         
         # Handle streaming mode
-        if request.stream:
+        if request.stream:num_tools = len(request.tools) if request.tools else 0
             # Use LiteLLM for streaming
-            num_tools = len(request.tools) if request.tools else 0
+            num_tools = len(request.tools) if request.tools else 0beautifully(
             
-            log_request_beautifully(
+            log_request_beautifully(.path, 
                 "POST", 
                 raw_request.url.path, 
-                display_model, 
+                display_model, m_request['messages']),
                 litellm_request.get('model'),
-                len(litellm_request['messages']),
+                len(litellm_request['messages']),   200  # Assuming success at this point
                 num_tools,
                 200  # Assuming success at this point
-            )
+            )response_generator = await litellm.acompletion(**litellm_request)
             # Ensure we use the async version for streaming
             response_generator = await litellm.acompletion(**litellm_request)
-            
-            return StreamingResponse(
+            rator, request),
+            return StreamingResponse(   media_type="text/event-stream"
                 handle_streaming(response_generator, request),
                 media_type="text/event-stream"
             )
-        else:
+        else:num_tools = len(request.tools) if request.tools else 0
             # Use LiteLLM for regular completion
-            num_tools = len(request.tools) if request.tools else 0
+            num_tools = len(request.tools) if request.tools else 0beautifully(
             
-            log_request_beautifully(
+            log_request_beautifully(.path, 
                 "POST", 
                 raw_request.url.path, 
-                display_model, 
+                display_model, m_request['messages']),
                 litellm_request.get('model'),
-                len(litellm_request['messages']),
+                len(litellm_request['messages']),   200  # Assuming success at this point
                 num_tools,
                 200  # Assuming success at this point
             )
-            start_time = time.time()
+            start_time = time.time()logger.debug(f"✅ RESPONSE RECEIVED: Model={litellm_request.get('model')}, Time={time.time() - start_time:.2f}s")
             litellm_response = litellm.completion(**litellm_request)
             logger.debug(f"✅ RESPONSE RECEIVED: Model={litellm_request.get('model')}, Time={time.time() - start_time:.2f}s")
-            
-            # Convert LiteLLM response to Anthropic format
             anthropic_response = convert_litellm_to_anthropic(litellm_response, request)
+            # Convert LiteLLM response to Anthropic format
+            anthropic_response = convert_litellm_to_anthropic(litellm_response, request)rn anthropic_response
             
-            return anthropic_response
+            return anthropic_responsee:
                 
-    except Exception as e:
+    except Exception as e:error_traceback = traceback.format_exc()
         import traceback
-        error_traceback = traceback.format_exc()
+        error_traceback = traceback.format_exc() info as possible about the error
         
         # Capture as much info as possible about the error
         error_details = {
-            "error": str(e),
-            "type": type(e).__name__,
+            "error": str(e),   "traceback": error_traceback
+            "type": type(e).__name__,}
             "traceback": error_traceback
         }
-        
+        'status_code', 'response', 'llm_provider', 'model']:
         # Check for LiteLLM-specific attributes
-        for attr in ['message', 'status_code', 'response', 'llm_provider', 'model']:
+        for attr in ['message', 'status_code', 'response', 'llm_provider', 'model']:        error_details[attr] = getattr(e, attr)
             if hasattr(e, attr):
-                error_details[attr] = getattr(e, attr)
+                error_details[attr] = make_json_safe(getattr(e, attr))eption details in dictionaries
         
         # Check for additional exception details in dictionaries
-        if hasattr(e, '__dict__'):
-            for key, value in e.__dict__.items():
-                if key not in error_details and key not in ['args', '__traceback__']:
-                    error_details[key] = str(value)
+        if hasattr(e, '__dict__'): not in ['args', '__traceback__']:
+            error_details['__dict__'] = make_json_safe(e.__dict__)            error_details[key] = str(value)
         
-        # Log all error details
+        logger.error(f"Error processing request: {json.dumps(make_json_safe(error_details), indent=2)}")
         logger.error(f"Error processing request: {json.dumps(error_details, indent=2)}")
-        
         # Format error for response
         error_message = f"Error: {str(e)}"
         if 'message' in error_details and error_details['message']:
             error_message += f"\nMessage: {error_details['message']}"
         if 'response' in error_details and error_details['response']:
             error_message += f"\nResponse: {error_details['response']}"
-        
+            error_message += f"\nResponse: {error_details['response']}"
         # Return detailed error
         status_code = error_details.get('status_code', 500)
         raise HTTPException(status_code=status_code, detail=error_message)
-
+        raise HTTPException(status_code=status_code, detail=error_message)
 @app.post("/v1/messages/count_tokens")
-async def count_tokens(
+async def count_tokens(/count_tokens")
     request: TokenCountRequest,
-    raw_request: Request
-):
+    raw_request: Requestequest,
+):  raw_request: Request
     try:
         # Log the incoming token count request
         original_model = request.original_model or request.model
-        
+        original_model = request.original_model or request.model
         # Get the display name for logging, just the model name without provider prefix
-        display_model = original_model
-        if "/" in display_model:
+        display_model = original_modelging, just the model name without provider prefix
+        if "/" in display_model:_model
             display_model = display_model.split("/")[-1]
-        
+            display_model = display_model.split("/")[-1]
         # Clean model name for capability check
-        clean_model = request.model
+        clean_model = request.modelbility check
         if clean_model.startswith("anthropic/"):
             clean_model = clean_model[len("anthropic/"):]
-        elif clean_model.startswith("openai/"):
+        elif clean_model.startswith("openai/"):ropic/"):]
             clean_model = clean_model[len("openai/"):]
-        
+            clean_model = clean_model[len("openai/"):]
         # Convert the messages to a format LiteLLM can understand
-        converted_request = convert_anthropic_to_litellm(
-            MessagesRequest(
+        converted_request = convert_anthropic_to_litellm(derstand
+            MessagesRequest(convert_anthropic_to_litellm(
                 model=request.model,
                 max_tokens=100,  # Arbitrary value not used for token counting
-                messages=request.messages,
-                system=request.system,
-                tools=request.tools,
+                messages=request.messages,ry value not used for token counting
+                system=request.system,ges,
+                tools=request.tools,m,
                 tool_choice=request.tool_choice,
-                thinking=request.thinking
-            )
+                thinking=request.thinkingchoice,
+            )   thinking=request.thinking
+        )   )
         )
-        
         # Use LiteLLM's token_counter function
-        try:
+        try:e LiteLLM's token_counter function
             # Import token_counter function
             from litellm import token_counter
-            
+            from litellm import token_counter
             # Log the request beautifully
             num_tools = len(request.tools) if request.tools else 0
-            
+            num_tools = len(request.tools) if request.tools else 0
             log_request_beautifully(
-                "POST",
+                "POST",_beautifully(
                 raw_request.url.path,
-                display_model,
+                display_model,l.path,
                 converted_request.get('model'),
                 len(converted_request['messages']),
-                num_tools,
+                num_tools,ted_request['messages']),
                 200  # Assuming success at this point
+            )   200  # Assuming success at this point
             )
-            
             # Count tokens
             token_count = token_counter(
                 model=converted_request["model"],
                 messages=converted_request["messages"],
+            )   messages=converted_request["messages"],
             )
-            
             # Return Anthropic-style response
             return TokenCountResponse(input_tokens=token_count)
-            
+            return TokenCountResponse(input_tokens=token_count)
         except ImportError:
             logger.error("Could not import token_counter from litellm")
-            # Fallback to a simple approximation
+            # Fallback to a simple approximation_counter from litellm")
             return TokenCountResponse(input_tokens=1000)  # Default fallback
-            
+            return TokenCountResponse(input_tokens=1000)  # Default fallback
     except Exception as e:
-        import traceback
+        import tracebacke:
         error_traceback = traceback.format_exc()
         logger.error(f"Error counting tokens: {str(e)}\n{error_traceback}")
         raise HTTPException(status_code=500, detail=f"Error counting tokens: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Error counting tokens: {str(e)}")
 @app.get("/")
 async def root():
     return {"message": "Anthropic Proxy for LiteLLM"}
-
+    return {"message": "Anthropic Proxy for LiteLLM"}
 # Define ANSI color codes for terminal output
-class Colors:
+class Colors: color codes for terminal output
     CYAN = "\033[96m"
     BLUE = "\033[94m"
     GREEN = "\033[92m"
     YELLOW = "\033[93m"
-    RED = "\033[91m"
+    RED = "\033[91m"3m"
     MAGENTA = "\033[95m"
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
+    RESET = "\033[0m"5m"
+    BOLD = "\033[1m""
     UNDERLINE = "\033[4m"
-    DIM = "\033[2m"
+    DIM = "\033[2m"33[4m"
 def log_request_beautifully(method, path, claude_model, openai_model, num_messages, num_tools, status_code):
-    """Log requests in a beautiful, twitter-friendly format showing Claude to OpenAI mapping."""
-    # Format the Claude model name nicely
+    """Log requests in a beautiful, twitter-friendly format showing Claude to OpenAI mapping."""tatus_code):
+    # Format the Claude model name nicelyer-friendly format showing Claude to OpenAI mapping."""
     claude_display = f"{Colors.CYAN}{claude_model}{Colors.RESET}"
-    
+    claude_display = f"{Colors.CYAN}{claude_model}{Colors.RESET}"
     # Extract endpoint name
-    endpoint = path
+    endpoint = pathint name
     if "?" in endpoint:
         endpoint = endpoint.split("?")[0]
-    
+        endpoint = endpoint.split("?")[0]
     # Extract just the OpenAI model name without provider prefix
-    openai_display = openai_model
-    if "/" in openai_display:
+    openai_display = openai_modelel name without provider prefix
+    if "/" in openai_display:odel
         openai_display = openai_display.split("/")[-1]
     openai_display = f"{Colors.GREEN}{openai_display}{Colors.RESET}"
-    
+    openai_display = f"{Colors.GREEN}{openai_display}{Colors.RESET}"
     # Format tools and messages
     tools_str = f"{Colors.MAGENTA}{num_tools} tools{Colors.RESET}"
     messages_str = f"{Colors.BLUE}{num_messages} messages{Colors.RESET}"
-    
+    messages_str = f"{Colors.BLUE}{num_messages} messages{Colors.RESET}"
     # Format status code
     status_str = f"{Colors.GREEN}✓ {status_code} OK{Colors.RESET}" if status_code == 200 else f"{Colors.RED}✗ {status_code}{Colors.RESET}"
+    status_str = f"{Colors.GREEN}✓ {status_code} OK{Colors.RESET}" if status_code == 200 else f"{Colors.RED}✗ {status_code}{Colors.RESET}"
     
-
     # Put it all together in a clear, beautiful format
     log_line = f"{Colors.BOLD}{method} {endpoint}{Colors.RESET} {status_str}"
     model_line = f"{claude_display} → {openai_display} {tools_str} {messages_str}"
-    
+    model_line = f"{claude_display} → {openai_display} {tools_str} {messages_str}"
     # Print to console
-    print(log_line)
+    print(log_line)ole
     print(model_line)
     sys.stdout.flush()
+    sys.stdout.flush()
+def make_json_safe(obj):
+    """Recursively convert non-serializable objects to strings for safe JSON logging.""" "__main__":
+    if isinstance(obj, dict):
+        return {k: make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, list):with: uvicorn server:app --reload --host 0.0.0.0 --port 8082")
+        return [make_json_safe(i) for i in obj]    sys.exit(0)
+    try:
+        json.dumps(obj)
 
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "--help":
-        print("Run with: uvicorn server:app --reload --host 0.0.0.0 --port 8082")
-        sys.exit(0)
-    
-    # Configure uvicorn to run with minimal logs
-    uvicorn.run(app, host="0.0.0.0", port=8082, log_level="error")
+
+
+
+
+
+
+
+
+
+
+
+    uvicorn.run(app, host="0.0.0.0", port=8082, log_level="error")    # Configure uvicorn to run with minimal logs            sys.exit(0)        print("Run with: uvicorn server:app --reload --host 0.0.0.0 --port 8082")    if len(sys.argv) > 1 and sys.argv[1] == "--help":    import sysif __name__ == "__main__":        return str(obj)    except (TypeError, OverflowError):        return obj    uvicorn.run(app, host="0.0.0.0", port=8082, log_level="error")
