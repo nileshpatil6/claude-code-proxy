@@ -1172,6 +1172,15 @@ async def create_message(
             litellm_request["model"] = f"openai/{actual_model}"
             litellm_request["api_key"] = A4F_API_KEY
             litellm_request["base_url"] = "https://api.a4f.co/v1"
+            
+            # Remove tools and tool_choice for A4F models as they don't support function calling
+            if "tools" in litellm_request:
+                logger.debug(f"Removing tools for A4F model: {actual_model}")
+                del litellm_request["tools"]
+            if "tool_choice" in litellm_request:
+                logger.debug(f"Removing tool_choice for A4F model: {actual_model}")
+                del litellm_request["tool_choice"]
+            
             logger.debug(f"Using A4F API key for model: {request.model} -> {litellm_request['model']}")
         elif request.model.startswith("openai/"):
             litellm_request["api_key"] = OPENAI_API_KEY
