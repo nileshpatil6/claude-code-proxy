@@ -1166,7 +1166,6 @@ async def create_message(
             litellm_request["base_url"] = "https://api.a4f.co/v1"
             litellm_request["custom_llm_provider"] = "a4f"
             logger.debug(f"Using A4F API key for model: {request.model}")
-ger.debug(f"Using A4F API key for model: {request.model}")
         elif request.model.startswith("openai/"):
             litellm_request["api_key"] = OPENAI_API_KEY
             logger.debug(f"Using OpenAI API key for model: {request.model}")
