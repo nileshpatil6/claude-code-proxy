@@ -225,6 +225,13 @@ class MessagesRequest(BaseModel):
             if PREFERRED_PROVIDER == "google" and SMALL_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
+            elif PREFERRED_PROVIDER == "a4f":
+                # Ensure we have the correct provider-6/ prefix
+                if SMALL_MODEL.startswith(("provider-6/", "a4f/")):
+                    new_model = SMALL_MODEL.replace("a4f/", "provider-6/")
+                else:
+                    new_model = f"provider-6/{SMALL_MODEL}"
+                mapped = True
             else:
                 new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
@@ -233,6 +240,12 @@ class MessagesRequest(BaseModel):
         elif 'sonnet' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and BIG_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{BIG_MODEL}"
+                mapped = True
+            elif PREFERRED_PROVIDER == "a4f":
+                if BIG_MODEL.startswith(("provider-6/", "a4f/")):
+                    new_model = BIG_MODEL.replace("a4f/", "provider-6/")
+                else:
+                    new_model = f"provider-6/{BIG_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{BIG_MODEL}"
@@ -305,6 +318,12 @@ class TokenCountRequest(BaseModel):
             if PREFERRED_PROVIDER == "google" and SMALL_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
+            elif PREFERRED_PROVIDER == "a4f":
+                if SMALL_MODEL.startswith(("provider-6/", "a4f/")):
+                    new_model = SMALL_MODEL.replace("a4f/", "provider-6/")
+                else:
+                    new_model = f"provider-6/{SMALL_MODEL}"
+                mapped = True
             else:
                 new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
@@ -313,6 +332,12 @@ class TokenCountRequest(BaseModel):
         elif 'sonnet' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and BIG_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{BIG_MODEL}"
+                mapped = True
+            elif PREFERRED_PROVIDER == "a4f":
+                if BIG_MODEL.startswith(("provider-6/", "a4f/")):
+                    new_model = BIG_MODEL.replace("a4f/", "provider-6/")
+                else:
+                    new_model = f"provider-6/{BIG_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{BIG_MODEL}"
