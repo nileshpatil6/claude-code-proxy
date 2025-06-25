@@ -1125,6 +1125,8 @@ async def create_message(
             clean_model = clean_model[len("openai/"):]
         elif clean_model.startswith("provider-5/"):
             clean_model = clean_model[len("provider-5/"):]
+        elif clean_model.startswith("a4f/"):
+            clean_model = clean_model[len("a4f/"):]
         
         logger.debug(f"📊 PROCESSING REQUEST: Model={request.model}, Stream={request.stream}")
         
@@ -1132,7 +1134,7 @@ async def create_message(
         litellm_request = convert_anthropic_to_litellm(request)
         
         # Determine which API key to use based on the model
-        if request.model.startswith("provider-5/"):
+        if request.model.startswith("provider-5/") or request.model.startswith("a4f/"):
             litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
             litellm_request["base_url"] = "https://api.a4f.co/v1"
