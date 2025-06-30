@@ -116,8 +116,8 @@ GEMINI_MODELS = [
 
 # List of A4F models
 A4F_MODELS = [
-    "provider-3/o3-mini",
-    "provider-3/gpt-4.1-mini"
+    "deepseek/deepseek-chat-v3-0324:free",
+    "provider-5/gpt-4o"
 ]
 
 
@@ -215,7 +215,7 @@ class MessagesRequest(BaseModel):
             clean_v = clean_v[7:]
         elif clean_v.startswith('a4f/'):
             clean_v = clean_v[4:]
-        elif clean_v.startswith('provider-3/'):
+        elif clean_v.startswith('provider-5/'):
             clean_v = clean_v[11:]
 
         # --- Mapping Logic --- START ---
@@ -226,11 +226,11 @@ class MessagesRequest(BaseModel):
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
             elif PREFERRED_PROVIDER == "a4f":
-                # Ensure we have the correct provider-3/ prefix
-                if SMALL_MODEL.startswith(("provider-3/", "a4f/")):
-                    new_model = SMALL_MODEL.replace("a4f/", "provider-3/")
+                # Ensure we have the correct provider-5/ prefix
+                if SMALL_MODEL.startswith(("provider-5/", "a4f/")):
+                    new_model = SMALL_MODEL.replace("a4f/", "provider-5/")
                 else:
-                    new_model = f"provider-3/{SMALL_MODEL}"
+                    new_model = f"provider-5/{SMALL_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{SMALL_MODEL}"
@@ -242,10 +242,10 @@ class MessagesRequest(BaseModel):
                 new_model = f"gemini/{BIG_MODEL}"
                 mapped = True
             elif PREFERRED_PROVIDER == "a4f":
-                if BIG_MODEL.startswith(("provider-3/", "a4f/")):
-                    new_model = BIG_MODEL.replace("a4f/", "provider-3/")
+                if BIG_MODEL.startswith(("provider-5/", "a4f/")):
+                    new_model = BIG_MODEL.replace("a4f/", "provider-5/")
                 else:
-                    new_model = f"provider-3/{BIG_MODEL}"
+                    new_model = f"provider-5/{BIG_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{BIG_MODEL}"
@@ -259,8 +259,8 @@ class MessagesRequest(BaseModel):
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
                 new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
-            elif clean_v in A4F_MODELS and not v.startswith('provider-3/'):
-                new_model = f"provider-3/{clean_v}"
+            elif clean_v in A4F_MODELS and not v.startswith('provider-5/'):
+                new_model = f"provider-5/{clean_v}"
                 mapped = True
         # --- Mapping Logic --- END ---
 
@@ -268,7 +268,7 @@ class MessagesRequest(BaseModel):
             logger.debug(f"📌 MODEL MAPPING: '{original_model}' ➡️ '{new_model}'")
         else:
              # If no mapping occurred and no prefix exists, log warning or decide default
-             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'provider-3/')):
+             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'provider-5/')):
                  logger.warning(f"⚠️ No prefix or mapping rule for model: '{original_model}'. Using as is.")
              new_model = v # Ensure we return the original if no rule applied
 
@@ -308,7 +308,7 @@ class TokenCountRequest(BaseModel):
             clean_v = clean_v[7:]
         elif clean_v.startswith('a4f/'):
             clean_v = clean_v[4:]
-        elif clean_v.startswith('provider-3/'):
+        elif clean_v.startswith('provider-5/'):
             clean_v = clean_v[11:]
 
         # --- Mapping Logic --- START ---
@@ -319,10 +319,10 @@ class TokenCountRequest(BaseModel):
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
             elif PREFERRED_PROVIDER == "a4f":
-                if SMALL_MODEL.startswith(("provider-3/", "a4f/")):
-                    new_model = SMALL_MODEL.replace("a4f/", "provider-3/")
+                if SMALL_MODEL.startswith(("provider-5/", "a4f/")):
+                    new_model = SMALL_MODEL.replace("a4f/", "provider-5/")
                 else:
-                    new_model = f"provider-3/{SMALL_MODEL}"
+                    new_model = f"provider-5/{SMALL_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{SMALL_MODEL}"
@@ -334,10 +334,10 @@ class TokenCountRequest(BaseModel):
                 new_model = f"gemini/{BIG_MODEL}"
                 mapped = True
             elif PREFERRED_PROVIDER == "a4f":
-                if BIG_MODEL.startswith(("provider-3/", "a4f/")):
-                    new_model = BIG_MODEL.replace("a4f/", "provider-3/")
+                if BIG_MODEL.startswith(("provider-5/", "a4f/")):
+                    new_model = BIG_MODEL.replace("a4f/", "provider-5/")
                 else:
-                    new_model = f"provider-3/{BIG_MODEL}"
+                    new_model = f"provider-5/{BIG_MODEL}"
                 mapped = True
             else:
                 new_model = f"openai/{BIG_MODEL}"
@@ -351,15 +351,15 @@ class TokenCountRequest(BaseModel):
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
                 new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
-            elif clean_v in A4F_MODELS and not v.startswith('provider-3/'):
-                new_model = f"provider-3/{clean_v}"
+            elif clean_v in A4F_MODELS and not v.startswith('provider-5/'):
+                new_model = f"provider-5/{clean_v}"
                 mapped = True
         # --- Mapping Logic --- END ---
 
         if mapped:
             logger.debug(f"📌 TOKEN COUNT MAPPING: '{original_model}' ➡️ '{new_model}'")
         else:
-             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'provider-3/')):
+             if not v.startswith(('openai/', 'gemini/', 'anthropic/', 'provider-5/')):
                  logger.warning(f"⚠️ No prefix or mapping rule for token count model: '{original_model}'. Using as is.")
              new_model = v # Ensure we return the original if no rule applied
 
@@ -583,7 +583,7 @@ def convert_anthropic_to_litellm(anthropic_request: MessagesRequest) -> Dict[str
     
     # Cap max_tokens for OpenAI models to their limit of 16384
     max_tokens = anthropic_request.max_tokens
-    if anthropic_request.model.startswith("openai/") or anthropic_request.model.startswith("gemini/") or anthropic_request.model.startswith("provider-3/"):
+    if anthropic_request.model.startswith("openai/") or anthropic_request.model.startswith("gemini/") or anthropic_request.model.startswith("provider-5/"):
         max_tokens = min(max_tokens, 16384)
         logger.debug(f"Capping max_tokens to 16384 for OpenAI/Gemini/A4F model (original value: {anthropic_request.max_tokens})")
     
@@ -678,8 +678,8 @@ def convert_litellm_to_anthropic(litellm_response: Union[Dict[str, Any], Any],
             clean_model = clean_model[len("anthropic/"):]
         elif clean_model.startswith("openai/"):
             clean_model = clean_model[len("openai/"):]
-        elif clean_model.startswith("provider-3/"):
-            clean_model = clean_model[len("provider-3/"):]
+        elif clean_model.startswith("provider-5/"):
+            clean_model = clean_model[len("provider-5/"):]
         
         # Check if this is a Claude model (which supports content blocks)
         is_claude_model = clean_model.startswith("claude-")
@@ -1149,8 +1149,8 @@ async def create_message(
             clean_model = clean_model[len("anthropic/"):]
         elif clean_model.startswith("openai/"):
             clean_model = clean_model[len("openai/"):]
-        elif clean_model.startswith("provider-3/"):
-            clean_model = clean_model[len("provider-3/"):]
+        elif clean_model.startswith("provider-5/"):
+            clean_model = clean_model[len("provider-5/"):]
         elif clean_model.startswith("a4f/"):
             clean_model = clean_model[len("a4f/"):]
         
@@ -1159,32 +1159,24 @@ async def create_message(
         # Convert Anthropic request to LiteLLM format
         litellm_request = convert_anthropic_to_litellm(request)
         
-        # Determine which API key to use based on the model
-        if request.model.startswith("provider-3/") or request.model.startswith("a4f/"):
-            # For A4F, we need to keep the provider-3/ prefix but use openai/ for LiteLLM routing
-            if request.model.startswith("a4f/"):
-                # Convert a4f/ to provider-3/ format
-                actual_model = request.model.replace("a4f/", "provider-3/")
-            else:
-                # Already has provider-3/ prefix
-                actual_model = request.model
-            
-            litellm_request["model"] = f"openai/{actual_model}"
+        # Configure for new provider API
+        if request.model:
+            litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://api.a4f.co/v1"
-            logger.debug(f"Using A4F API key for model: {request.model} -> {litellm_request['model']}")
-        elif request.model.startswith("openai/"):
-            litellm_request["api_key"] = OPENAI_API_KEY
-            logger.debug(f"Using OpenAI API key for model: {request.model}")
-        elif request.model.startswith("gemini/"):
-            litellm_request["api_key"] = GEMINI_API_KEY
-            logger.debug(f"Using Gemini API key for model: {request.model}")
-        else:
-            litellm_request["api_key"] = ANTHROPIC_API_KEY
-            logger.debug(f"Using Anthropic API key for model: {request.model}")
+            litellm_request["base_url"] = "https://openrouter.ai/api/v1"
+            
+            # Remove tools and tool_choice for models that don't support function calling
+            if "tools" in litellm_request:
+                logger.debug(f"Removing tools for model: {request.model}")
+                del litellm_request["tools"]
+            if "tool_choice" in litellm_request:
+                logger.debug(f"Removing tool_choice for model: {request.model}")
+                del litellm_request["tool_choice"]
+            
+            logger.debug(f"Configured for new provider API: {request.model}")
         
         # For OpenAI models - modify request format to work with limitations
-        if "openai" in litellm_request["model"] or "provider-3" in litellm_request["model"] and "messages" in litellm_request:
+        if "openai" in litellm_request["model"] or "provider-5" in litellm_request["model"] and "messages" in litellm_request:
             logger.debug(f"Processing OpenAI model request: {litellm_request['model']}")
             
             # For OpenAI models, we need to convert content blocks to simple strings
@@ -1435,8 +1427,8 @@ async def count_tokens(
             clean_model = clean_model[len("anthropic/"):]
         elif clean_model.startswith("openai/"):
             clean_model = clean_model[len("openai/"):]
-        elif clean_model.startswith("provider-3/"):
-            clean_model = clean_model[len("provider-3/"):]
+        elif clean_model.startswith("provider-5/"):
+            clean_model = clean_model[len("provider-5/"):]
         
         # Convert the messages to a format LiteLLM can understand
         converted_request = convert_anthropic_to_litellm(
