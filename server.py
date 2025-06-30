@@ -220,11 +220,12 @@ class MessagesRequest(BaseModel):
 
         # --- Mapping Logic --- START ---
         mapped = False
-        # Special handling for o3-mini and similar models that require provider prefix
         provider_models = ["o3-mini", "o1", "o1-mini", "o1-pro"]
         if clean_v in provider_models:
-            # Always use provider-3/ prefix for these models (could be made configurable)
-            new_model = f"provider-3/{clean_v}"
+            if PREFERRED_PROVIDER == "a4f":
+                new_model = f"provider-3/{clean_v}"
+            else:
+                new_model = f"openai/{clean_v}"
             mapped = True
         # Map Haiku to SMALL_MODEL based on provider preference
         elif 'haiku' in clean_v.lower():
@@ -240,11 +241,11 @@ class MessagesRequest(BaseModel):
                 mapped = True
             else:
                 # If SMALL_MODEL is a provider-prefixed model, keep it
-                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("provider-3/"):
-                    if SMALL_MODEL.startswith("provider-3/"):
+                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("openai/"):
+                    if SMALL_MODEL.startswith("openai/"):
                         new_model = SMALL_MODEL
                     else:
-                        new_model = f"provider-3/{SMALL_MODEL}"
+                        new_model = f"openai/{SMALL_MODEL}"
                 else:
                     new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
@@ -260,11 +261,11 @@ class MessagesRequest(BaseModel):
                     new_model = f"provider-3/{BIG_MODEL}"
                 mapped = True
             else:
-                if BIG_MODEL in provider_models or BIG_MODEL.startswith("provider-3/"):
-                    if BIG_MODEL.startswith("provider-3/"):
+                if BIG_MODEL in provider_models or BIG_MODEL.startswith("openai/"):
+                    if BIG_MODEL.startswith("openai/"):
                         new_model = BIG_MODEL
                     else:
-                        new_model = f"provider-3/{BIG_MODEL}"
+                        new_model = f"openai/{BIG_MODEL}"
                 else:
                     new_model = f"openai/{BIG_MODEL}"
                 mapped = True
@@ -274,9 +275,9 @@ class MessagesRequest(BaseModel):
                 new_model = f"gemini/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
-                # For o3-mini and similar, force provider-3/ prefix
+                # For o3-mini and similar, force openai/ prefix
                 if clean_v in provider_models:
-                    new_model = f"provider-3/{clean_v}"
+                    new_model = f"openai/{clean_v}"
                 else:
                     new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
@@ -334,11 +335,12 @@ class TokenCountRequest(BaseModel):
 
         # --- Mapping Logic --- START ---
         mapped = False
-        # Special handling for o3-mini and similar models that require provider prefix
         provider_models = ["o3-mini", "o1", "o1-mini", "o1-pro"]
         if clean_v in provider_models:
-            # Always use provider-3/ prefix for these models (could be made configurable)
-            new_model = f"provider-3/{clean_v}"
+            if PREFERRED_PROVIDER == "a4f":
+                new_model = f"provider-3/{clean_v}"
+            else:
+                new_model = f"openai/{clean_v}"
             mapped = True
         # Map Haiku to SMALL_MODEL based on provider preference
         elif 'haiku' in clean_v.lower():
@@ -354,11 +356,11 @@ class TokenCountRequest(BaseModel):
                 mapped = True
             else:
                 # If SMALL_MODEL is a provider-prefixed model, keep it
-                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("provider-3/"):
-                    if SMALL_MODEL.startswith("provider-3/"):
+                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("openai/"):
+                    if SMALL_MODEL.startswith("openai/"):
                         new_model = SMALL_MODEL
                     else:
-                        new_model = f"provider-3/{SMALL_MODEL}"
+                        new_model = f"openai/{SMALL_MODEL}"
                 else:
                     new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
@@ -374,11 +376,11 @@ class TokenCountRequest(BaseModel):
                     new_model = f"provider-3/{BIG_MODEL}"
                 mapped = True
             else:
-                if BIG_MODEL in provider_models or BIG_MODEL.startswith("provider-3/"):
-                    if BIG_MODEL.startswith("provider-3/"):
+                if BIG_MODEL in provider_models or BIG_MODEL.startswith("openai/"):
+                    if BIG_MODEL.startswith("openai/"):
                         new_model = BIG_MODEL
                     else:
-                        new_model = f"provider-3/{BIG_MODEL}"
+                        new_model = f"openai/{BIG_MODEL}"
                 else:
                     new_model = f"openai/{BIG_MODEL}"
                 mapped = True
@@ -388,9 +390,9 @@ class TokenCountRequest(BaseModel):
                 new_model = f"gemini/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
-                # For o3-mini and similar, force provider-3/ prefix
+                # For o3-mini and similar, force openai/ prefix
                 if clean_v in provider_models:
-                    new_model = f"provider-3/{clean_v}"
+                    new_model = f"openai/{clean_v}"
                 else:
                     new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
@@ -1203,11 +1205,10 @@ async def create_message(
         litellm_request = convert_anthropic_to_litellm(request)
         
         # Configure for new provider API
-        if request.model:
+        if request.model and (request.model.startswith("provider-3/") or PREFERRED_PROVIDER == "a4f"):
             litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
             litellm_request["base_url"] = "https://api.a4f.co/v1"
-            
             # Remove tools and tool_choice for models that don't support function calling
             if "tools" in litellm_request:
                 logger.debug(f"Removing tools for model: {request.model}")
@@ -1215,7 +1216,6 @@ async def create_message(
             if "tool_choice" in litellm_request:
                 logger.debug(f"Removing tool_choice for model: {request.model}")
                 del litellm_request["tool_choice"]
-            
             logger.debug(f"Configured for new provider API: {request.model}")
         
         # For OpenAI models - modify request format to work with limitations
