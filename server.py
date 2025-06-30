@@ -94,7 +94,7 @@ SMALL_MODEL = os.environ.get("SMALL_MODEL", "provider-3/o3-mini")
 
 # List of OpenAI models
 OPENAI_MODELS = [
-    "o3-mini",
+    "provider-3/o3-mini",
     "o1",
     "o1-mini",
     "o1-pro",
