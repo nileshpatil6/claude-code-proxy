@@ -94,7 +94,7 @@ SMALL_MODEL = os.environ.get("SMALL_MODEL", "provider-3/o3-mini")
 
 # List of OpenAI models
 OPENAI_MODELS = [
-    "provider-3/o3-mini",
+    "o3-mini",
     "o1",
     "o1-mini",
     "o1-pro",
@@ -220,8 +220,14 @@ class MessagesRequest(BaseModel):
 
         # --- Mapping Logic --- START ---
         mapped = False
+        # Special handling for o3-mini and similar models that require provider prefix
+        provider_models = ["o3-mini", "o1", "o1-mini", "o1-pro"]
+        if clean_v in provider_models:
+            # Always use provider-3/ prefix for these models (could be made configurable)
+            new_model = f"provider-3/{clean_v}"
+            mapped = True
         # Map Haiku to SMALL_MODEL based on provider preference
-        if 'haiku' in clean_v.lower():
+        elif 'haiku' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and SMALL_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
@@ -233,9 +239,15 @@ class MessagesRequest(BaseModel):
                     new_model = f"provider-3/{SMALL_MODEL}"
                 mapped = True
             else:
-                new_model = f"openai/{SMALL_MODEL}"
+                # If SMALL_MODEL is a provider-prefixed model, keep it
+                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("provider-3/"):
+                    if SMALL_MODEL.startswith("provider-3/"):
+                        new_model = SMALL_MODEL
+                    else:
+                        new_model = f"provider-3/{SMALL_MODEL}"
+                else:
+                    new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
-
         # Map Sonnet to BIG_MODEL based on provider preference
         elif 'sonnet' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and BIG_MODEL in GEMINI_MODELS:
@@ -248,16 +260,25 @@ class MessagesRequest(BaseModel):
                     new_model = f"provider-3/{BIG_MODEL}"
                 mapped = True
             else:
-                new_model = f"openai/{BIG_MODEL}"
+                if BIG_MODEL in provider_models or BIG_MODEL.startswith("provider-3/"):
+                    if BIG_MODEL.startswith("provider-3/"):
+                        new_model = BIG_MODEL
+                    else:
+                        new_model = f"provider-3/{BIG_MODEL}"
+                else:
+                    new_model = f"openai/{BIG_MODEL}"
                 mapped = True
-
         # Add prefixes to non-mapped models if they match known lists
         elif not mapped:
             if clean_v in GEMINI_MODELS and not v.startswith('gemini/'):
                 new_model = f"gemini/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
-                new_model = f"openai/{clean_v}"
+                # For o3-mini and similar, force provider-3/ prefix
+                if clean_v in provider_models:
+                    new_model = f"provider-3/{clean_v}"
+                else:
+                    new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in A4F_MODELS and not v.startswith('provider-3/'):
                 new_model = f"provider-3/{clean_v}"
@@ -313,21 +334,34 @@ class TokenCountRequest(BaseModel):
 
         # --- Mapping Logic --- START ---
         mapped = False
+        # Special handling for o3-mini and similar models that require provider prefix
+        provider_models = ["o3-mini", "o1", "o1-mini", "o1-pro"]
+        if clean_v in provider_models:
+            # Always use provider-3/ prefix for these models (could be made configurable)
+            new_model = f"provider-3/{clean_v}"
+            mapped = True
         # Map Haiku to SMALL_MODEL based on provider preference
-        if 'haiku' in clean_v.lower():
+        elif 'haiku' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and SMALL_MODEL in GEMINI_MODELS:
                 new_model = f"gemini/{SMALL_MODEL}"
                 mapped = True
             elif PREFERRED_PROVIDER == "a4f":
+                # Ensure we have the correct provider-3/ prefix
                 if SMALL_MODEL.startswith(("provider-3/", "a4f/")):
                     new_model = SMALL_MODEL.replace("a4f/", "provider-3/")
                 else:
                     new_model = f"provider-3/{SMALL_MODEL}"
                 mapped = True
             else:
-                new_model = f"openai/{SMALL_MODEL}"
+                # If SMALL_MODEL is a provider-prefixed model, keep it
+                if SMALL_MODEL in provider_models or SMALL_MODEL.startswith("provider-3/"):
+                    if SMALL_MODEL.startswith("provider-3/"):
+                        new_model = SMALL_MODEL
+                    else:
+                        new_model = f"provider-3/{SMALL_MODEL}"
+                else:
+                    new_model = f"openai/{SMALL_MODEL}"
                 mapped = True
-
         # Map Sonnet to BIG_MODEL based on provider preference
         elif 'sonnet' in clean_v.lower():
             if PREFERRED_PROVIDER == "google" and BIG_MODEL in GEMINI_MODELS:
@@ -340,16 +374,25 @@ class TokenCountRequest(BaseModel):
                     new_model = f"provider-3/{BIG_MODEL}"
                 mapped = True
             else:
-                new_model = f"openai/{BIG_MODEL}"
+                if BIG_MODEL in provider_models or BIG_MODEL.startswith("provider-3/"):
+                    if BIG_MODEL.startswith("provider-3/"):
+                        new_model = BIG_MODEL
+                    else:
+                        new_model = f"provider-3/{BIG_MODEL}"
+                else:
+                    new_model = f"openai/{BIG_MODEL}"
                 mapped = True
-
         # Add prefixes to non-mapped models if they match known lists
         elif not mapped:
             if clean_v in GEMINI_MODELS and not v.startswith('gemini/'):
                 new_model = f"gemini/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in OPENAI_MODELS and not v.startswith('openai/'):
-                new_model = f"openai/{clean_v}"
+                # For o3-mini and similar, force provider-3/ prefix
+                if clean_v in provider_models:
+                    new_model = f"provider-3/{clean_v}"
+                else:
+                    new_model = f"openai/{clean_v}"
                 mapped = True # Technically mapped to add prefix
             elif clean_v in A4F_MODELS and not v.startswith('provider-3/'):
                 new_model = f"provider-3/{clean_v}"
