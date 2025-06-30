@@ -709,6 +709,21 @@ def convert_anthropic_to_litellm(anthropic_request: MessagesRequest) -> Dict[str
             # Default to auto if we can't determine
             litellm_request["tool_choice"] = "auto"
     
+    # Configure for new provider API
+    if anthropic_request.model and (anthropic_request.model.startswith("provider-3/") or PREFERRED_PROVIDER == "a4f"):
+        litellm_request["model"] = anthropic_request.model
+        litellm_request["api_key"] = A4F_API_KEY
+        litellm_request["base_url"] = "https://api.a4f.co/v1"
+        litellm_request["provider"] = "a4f"
+        # Remove tools and tool_choice for models that don't support function calling
+        if "tools" in litellm_request:
+            logger.debug(f"Removing tools for model: {anthropic_request.model}")
+            del litellm_request["tools"]
+        if "tool_choice" in litellm_request:
+            logger.debug(f"Removing tool_choice for model: {anthropic_request.model}")
+            del litellm_request["tool_choice"]
+        logger.debug(f"Configured for new provider API: {anthropic_request.model}")
+    
     return litellm_request
 
 def convert_litellm_to_anthropic(litellm_response: Union[Dict[str, Any], Any], 
@@ -1209,6 +1224,7 @@ async def create_message(
             litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
             litellm_request["base_url"] = "https://api.a4f.co/v1"
+            litellm_request["provider"] = "a4f"
             # Remove tools and tool_choice for models that don't support function calling
             if "tools" in litellm_request:
                 logger.debug(f"Removing tools for model: {request.model}")
