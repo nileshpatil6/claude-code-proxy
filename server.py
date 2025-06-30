@@ -89,8 +89,8 @@ PREFERRED_PROVIDER = os.environ.get("PREFERRED_PROVIDER", "openai").lower()
 
 # Get model mapping configuration from environment
 # Default to latest OpenAI models if not set
-BIG_MODEL = os.environ.get("BIG_MODEL", "o3-mini")
-SMALL_MODEL = os.environ.get("SMALL_MODEL", "o3-mini")
+BIG_MODEL = os.environ.get("BIG_MODEL", "provider-3/o3-mini")
+SMALL_MODEL = os.environ.get("SMALL_MODEL", "provider-3/o3-mini")
 
 # List of OpenAI models
 OPENAI_MODELS = [
