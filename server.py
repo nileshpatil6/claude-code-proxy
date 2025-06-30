@@ -1163,7 +1163,7 @@ async def create_message(
         if request.model:
             litellm_request["model"] = request.model
             litellm_request["api_key"] = A4F_API_KEY
-            litellm_request["base_url"] = "https://openrouter.ai/api/v1"
+            litellm_request["base_url"] = "https://api.a4f.co/v1"
             
             # Remove tools and tool_choice for models that don't support function calling
             if "tools" in litellm_request:
